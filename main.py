@@ -44,6 +44,15 @@ class App(QWidget):
         self.setLayout(self.layout)
         self.show()
 
+        self.parse_arguments(app.arguments())
+
+    def parse_arguments(self, args: list[str]):
+        if len(args) > 1:
+            for arg in args:
+                if arg.startswith('--path=', 0, 7):
+                    self.directory = str(arg.split('--path=')[1])
+                    self.load_data(self.table)
+
     def center_window(self):
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
@@ -104,9 +113,7 @@ class App(QWidget):
                             cluster_name,
                             cert.not_valid_before_utc.date(),
                             cert.not_valid_after_utc.date(),
-                            (
-                                cert.not_valid_after_utc.date() - datetime.date.today()
-                            ).days,
+                            (cert.not_valid_after_utc.date() - datetime.date.today()).days,
                         ]
                     )
 

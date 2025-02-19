@@ -5,6 +5,7 @@ from os import listdir
 from os.path import isfile, join
 
 from PyQt5.QtCore import QSize
+from PyQt5.QtGui import QColor
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
@@ -26,11 +27,12 @@ class App(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.directory: str | None = None
+        self.warning_days: int = 10
+
         self.setWindowTitle('Certificate Viewer')
         self.setMinimumSize(QSize(900, 500))
         self.center_window()
-
-        self.directory: str | None = None
 
         self.layout = QVBoxLayout()
 
@@ -40,18 +42,22 @@ class App(QWidget):
 
         self.table = self.create_table()
         self.layout.addWidget(self.table)
-
         self.setLayout(self.layout)
-        self.show()
 
         self.parse_arguments(app.arguments())
+
+        if self.directory:
+            self.load_data(self.table)
+
+        self.show()
 
     def parse_arguments(self, args: list[str]):
         if len(args) > 1:
             for arg in args:
                 if arg.startswith('--path=', 0, 7):
                     self.directory = str(arg.split('--path=')[1])
-                    self.load_data(self.table)
+                elif arg.startswith('--days=', 0, 7):
+                    self.warning_days = int(arg.split('--days=')[1])
 
     def center_window(self):
         qr = self.frameGeometry()
@@ -60,9 +66,7 @@ class App(QWidget):
         self.move(qr.topLeft())
 
     def select_directory(self):
-        dir_path = QFileDialog.getExistingDirectory(
-            self, 'Select Folder', self.directory
-        )
+        dir_path = QFileDialog.getExistingDirectory(self, 'Select Folder', self.directory)
         if dir_path:
             self.directory = dir_path
             self.update_table()
@@ -76,9 +80,7 @@ class App(QWidget):
         tableWidget.setColumnWidth(3, 140)
         tableWidget.setColumnWidth(4, 140)
 
-        tableWidget.setHorizontalHeaderLabels(
-            ['File', 'Cluster', 'Start Data', 'Expire Data', 'Days to expire']
-        )
+        tableWidget.setHorizontalHeaderLabels(['File', 'Cluster', 'Start Data', 'Expire Data', 'Days to expire'])
         tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         tableWidget.horizontalHeader().setStretchLastSection(True)
 
@@ -86,15 +88,11 @@ class App(QWidget):
 
     def load_data(self, table: QTableWidget) -> None:
         rows = []
-        for file in [
-            f for f in listdir(self.directory) if isfile(join(self.directory, f))
-        ]:
+        for file in [f for f in listdir(self.directory) if isfile(join(self.directory, f))]:
             data = self.read_yaml_file(join(self.directory, file))
             if isinstance(data, dict):
                 try:
-                    client_certificate_data_base64 = data['users'][0]['user'][
-                        'client-certificate-data'
-                    ]
+                    client_certificate_data_base64 = data['users'][0]['user']['client-certificate-data']
                 except KeyError:
                     continue
 
@@ -118,9 +116,13 @@ class App(QWidget):
                     )
 
         table.setRowCount(len(rows))
+        row_color = QColor(255, 0, 0)
         for i, row in enumerate(rows):
             for j, value in enumerate(row):
-                table.setItem(i, j, QTableWidgetItem(str(value)))
+                item = QTableWidgetItem(str(value))
+                if row[-1] <= self.warning_days:
+                    item.setBackground(row_color)
+                table.setItem(i, j, item)
 
         table.resizeRowsToContents()
 

@@ -4,7 +4,7 @@ import sys
 from os import listdir
 from os.path import isfile, join
 
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QColor
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -19,8 +19,16 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QDesktopWidget,
     QPushButton,
-    QFileDialog,
+    QFileDialog, QMessageBox,
 )
+
+
+class NumericTableWidgetItem(QTableWidgetItem):
+    def __lt__(self, other: object):
+        try:
+            return int(self.text()) < int(other.text())
+        except (ValueError, TypeError):
+            return super().__lt__(other)
 
 
 class App(QWidget):
@@ -75,11 +83,12 @@ class App(QWidget):
         tableWidget = QTableWidget()
         tableWidget.setColumnCount(5)
         tableWidget.setColumnWidth(0, 300)
-        tableWidget.setColumnWidth(1, 140)
+        tableWidget.setColumnWidth(1, 170)
         tableWidget.setColumnWidth(2, 140)
         tableWidget.setColumnWidth(3, 140)
-        tableWidget.setColumnWidth(4, 140)
+        tableWidget.setColumnWidth(4, 110)
 
+        tableWidget.setSortingEnabled(True)
         tableWidget.setHorizontalHeaderLabels(['File', 'Cluster', 'Start Data', 'Expire Data', 'Days to expire'])
         tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         tableWidget.horizontalHeader().setStretchLastSection(True)
@@ -89,17 +98,13 @@ class App(QWidget):
     def load_data(self, table: QTableWidget) -> None:
         rows = []
         for file in [f for f in listdir(self.directory) if isfile(join(self.directory, f))]:
-            data = self.read_yaml_file(join(self.directory, file))
-            if isinstance(data, dict):
-                try:
-                    client_certificate_data_base64 = data['users'][0]['user']['client-certificate-data']
-                except KeyError:
+            try:
+                data = self.read_yaml_file(join(self.directory, file))
+                if not isinstance(data, dict):
                     continue
 
-                try:
-                    cluster_name = data['clusters'][0]['name']
-                except KeyError:
-                    cluster_name = ''
+                client_certificate_data_base64 = data['users'][0]['user']['client-certificate-data']
+                cluster_name = data.get('clusters', [{}])[0].get('name', '')
 
                 if client_certificate_data_base64:
                     pem_data = base64.b64decode(client_certificate_data_base64)
@@ -114,17 +119,30 @@ class App(QWidget):
                             (cert.not_valid_after_utc.date() - datetime.date.today()).days,
                         ]
                     )
+            except (KeyError, TypeError, ValueError) as e:
+                continue
 
         table.setRowCount(len(rows))
         row_color = QColor(255, 0, 0)
         for i, row in enumerate(rows):
             for j, value in enumerate(row):
-                item = QTableWidgetItem(str(value))
+                if j == 4:
+                    item = NumericTableWidgetItem(str(value))
+                else:
+                    item = QTableWidgetItem(str(value))
                 if row[-1] <= self.warning_days:
                     item.setBackground(row_color)
                 table.setItem(i, j, item)
 
+        if not rows:
+            QMessageBox.information(
+                self,
+                'Information',
+                'No valid Kubernetes config files found in the selected directory.',
+            )
+
         table.resizeRowsToContents()
+        table.sortByColumn(4, Qt.AscendingOrder)
 
     def update_table(self) -> None:
         self.table.clearContents()

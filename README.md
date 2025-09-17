@@ -1,6 +1,6 @@
 <div align="center">
 <h1>☸ Kubernetes Certificate Viewer</h1>
-<p>Cross-platform desktop application for Kubernetes Certificate Viewer</p>
+<p>Cross-platform desktop application for monitoring the status of kubernetes certificates</p>
 
 [![Actions status](https://github.com/BushlanovDev/kubernetes-certificate-viewer/actions/workflows/check.yml/badge.svg)](https://github.com/BushlanovDev/kubernetes-certificate-viewer/actions) 
 [![Python](https://img.shields.io/badge/Python-3.12%2B-brightgreen)](https://www.python.org/downloads/)

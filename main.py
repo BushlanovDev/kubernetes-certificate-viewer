@@ -119,7 +119,7 @@ class App(QWidget):
                             (cert.not_valid_after_utc.date() - datetime.date.today()).days,
                         ]
                     )
-            except (KeyError, TypeError, ValueError) as e:
+            except (KeyError, TypeError, ValueError):
                 continue
 
         table.setRowCount(len(rows))

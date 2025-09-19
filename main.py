@@ -5,7 +5,7 @@ from os import listdir
 from os.path import isfile, join
 
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QIcon
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
@@ -155,5 +155,6 @@ class App(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon('resources/icon32.ico'))
     ex = App()
     sys.exit(app.exec_())

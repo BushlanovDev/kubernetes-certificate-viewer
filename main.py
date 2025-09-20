@@ -83,10 +83,10 @@ class App(QWidget):
         tableWidget = QTableWidget()
         tableWidget.setColumnCount(5)
         tableWidget.setColumnWidth(0, 300)
-        tableWidget.setColumnWidth(1, 170)
-        tableWidget.setColumnWidth(2, 140)
-        tableWidget.setColumnWidth(3, 140)
-        tableWidget.setColumnWidth(4, 110)
+        tableWidget.setColumnWidth(1, 180)
+        tableWidget.setColumnWidth(2, 130)
+        tableWidget.setColumnWidth(3, 130)
+        tableWidget.setColumnWidth(4, 90)
 
         tableWidget.setSortingEnabled(True)
         tableWidget.setHorizontalHeaderLabels(['File', 'Cluster', 'Start Data', 'Expire Data', 'Days to expire'])
@@ -114,8 +114,8 @@ class App(QWidget):
                         [
                             file,
                             cluster_name,
-                            cert.not_valid_before_utc.date(),
-                            cert.not_valid_after_utc.date(),
+                            cert.not_valid_before_utc.date().strftime('%Y.%m.%d'),
+                            cert.not_valid_after_utc.date().strftime('%Y.%m.%d'),
                             (cert.not_valid_after_utc.date() - datetime.date.today()).days,
                         ]
                     )
@@ -130,8 +130,17 @@ class App(QWidget):
                     item = NumericTableWidgetItem(str(value))
                 else:
                     item = QTableWidgetItem(str(value))
+
+                if j == 0:
+                    full_path = join(self.directory, str(value))
+                    item.setToolTip(full_path)
+
+                if j in [2, 3, 4]:
+                    item.setTextAlignment(Qt.AlignCenter)
+
                 if row[-1] <= self.warning_days:
                     item.setBackground(row_color)
+
                 table.setItem(i, j, item)
 
         if not rows:
@@ -148,9 +157,12 @@ class App(QWidget):
         self.table.clearContents()
         self.load_data(self.table)
 
-    def read_yaml_file(self, filename: str) -> dict:
-        with open(filename, 'r') as f:
-            return yaml.safe_load(f)
+    def read_yaml_file(self, filename: str) -> dict | None:
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                return yaml.safe_load(f)
+        except (yaml.YAMLError, UnicodeDecodeError):
+            return None
 
 
 if __name__ == '__main__':

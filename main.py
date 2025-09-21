@@ -3,9 +3,10 @@ import datetime
 import sys
 from os import listdir
 from os.path import isfile, join
+from typing import Any
 
-from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QColor, QIcon
+from PyQt5.QtCore import QSize, Qt, QUrl
+from PyQt5.QtGui import QColor, QIcon, QDesktopServices
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
@@ -19,7 +20,9 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QDesktopWidget,
     QPushButton,
-    QFileDialog, QMessageBox,
+    QFileDialog,
+    QMessageBox,
+    QMenu,
 )
 
 
@@ -49,6 +52,10 @@ class App(QWidget):
         self.layout.addWidget(self.select_folder_button)
 
         self.table = self.create_table()
+
+        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.show_context_menu)
+
         self.layout.addWidget(self.table)
         self.setLayout(self.layout)
 
@@ -97,6 +104,10 @@ class App(QWidget):
 
     def load_data(self, table: QTableWidget) -> None:
         rows = []
+        if not self.directory or not isdir(self.directory):
+            QMessageBox.warning(self, 'Warning', 'The specified directory does not exist.')
+            return
+
         for file in [f for f in listdir(self.directory) if isfile(join(self.directory, f))]:
             try:
                 data = self.read_yaml_file(join(self.directory, file))
@@ -164,9 +175,55 @@ class App(QWidget):
         except (yaml.YAMLError, UnicodeDecodeError):
             return None
 
+    def show_context_menu(self, pos: Any):
+        item = self.table.itemAt(pos)
+        if item is None:
+            return
+
+        context_menu = QMenu(self)
+        view_action = context_menu.addAction("View")
+
+        action = context_menu.exec_(self.table.mapToGlobal(pos))
+        if action == view_action:
+            self.view_row_details(item.row())
+
+    def view_row_details(self, row_index: int):
+        file = self.table.item(row_index, 0).text()
+        cluster = self.table.item(row_index, 1).text()
+        start_date = self.table.item(row_index, 2).text()
+        expire_date = self.table.item(row_index, 3).text()
+
+        details_text = (
+            f"<b>File:</b> {file}<br>"
+            f"<b>Cluster:</b> {cluster}<br>"
+            f"<b>Start Date:</b> {start_date}<br>"
+            f"<b>Expire Data:</b> {expire_date}"
+        )
+
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setTextFormat(Qt.RichText)
+        msg_box.setWindowTitle("Certificate Details")
+        msg_box.setText(details_text)
+
+        open_button = msg_box.addButton("Open File", QMessageBox.ActionRole)
+        msg_box.addButton("Close", QMessageBox.RejectRole)
+
+        msg_box.exec_()
+
+        if msg_box.clickedButton() == open_button:
+            if self.directory:
+                full_path = join(self.directory, file)
+                QDesktopServices.openUrl(QUrl.fromLocalFile(full_path))
+
 
 if __name__ == '__main__':
+    from os.path import isdir
+
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon('resources/icon32.ico'))
+    try:
+        app.setWindowIcon(QIcon('resources/icon32.ico'))
+    except FileNotFoundError:
+        print("Icon not found, proceeding without it.")
     ex = App()
     sys.exit(app.exec_())

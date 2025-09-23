@@ -12,11 +12,14 @@
 ## 🌟 Description
 
 A simple desktop console utility for monitoring current Kubernetes cluster certificates.
+<div align="center">
+  <img src="https://github.com/BushlanovDev/kubernetes-certificate-viewer/blob/main/resources/screenshot.png?raw=true" alt="Kubernetes Certificate Viewer" width="800" />
+</div>
 
 ## 🚀 Quick Start
 
 Download the executable file for your platform from
-the [release page](https://github.com/BushlanovDev/android-tv-remote-control-desktop/releases) and enjoy =)
+the [release page](https://github.com/BushlanovDev/kubernetes-certificate-viewer/releases) and enjoy =)
 
 ## 💻 Run from source code
 
@@ -33,6 +36,9 @@ pip install -r requirements.txt
 
 # Run app
 python main.py
+
+# Run app with parameters
+python main.py --path=/home/user/.kube --days=3
 ```
 
 ## 🛠️ Building an executable file

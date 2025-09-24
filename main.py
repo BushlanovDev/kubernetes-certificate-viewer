@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QFileDialog,
     QMessageBox,
-    QMenu,
+    QMenu, QAbstractItemView,
 )
 
 
@@ -99,6 +99,7 @@ class App(QWidget):
         tableWidget.setHorizontalHeaderLabels(['File', 'Cluster', 'Start Data', 'Expire Data', 'Days to expire'])
         tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         tableWidget.horizontalHeader().setStretchLastSection(True)
+        tableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         return tableWidget
 

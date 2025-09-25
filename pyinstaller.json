@@ -52,14 +52,6 @@
   {
    "optionDest": "bootloader_ignore_signals",
    "value": false
-  },
-  {
-   "optionDest": "hiddenimports",
-   "value": "zeroconf._utils.ipaddress"
-  },
-  {
-   "optionDest": "hiddenimports",
-   "value": "zeroconf._handlers.answers"
   }
  ],
  "nonPyinstallerOptions": {

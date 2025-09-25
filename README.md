@@ -46,7 +46,7 @@ python main.py --path=/home/user/.kube --days=3
 ```bash
 pip install pyinstaller # or pip install auto-py-to-exe for use gui
 
-pyinstaller --noconfirm --onedir --windowed --icon "./resources/icon32.ico" --hidden-import "zeroconf._utils.ipaddress" --hidden-import "zeroconf._handlers.answers"  "./main.py"
+pyinstaller --noconfirm --onedir --windowed --icon "./resources/icon32.ico" "./main.py"
 ```
 
 ## 📄 License
